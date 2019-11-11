@@ -33,28 +33,23 @@ $names[14] = @()
 #----------------------------------
 
 cls
-$coms = Get-WmiObject Win32_SerialPort
-$spisok = "1." + $coms.Name
-echo "------------------------------------"
-echo "Доступные консольные порты: "
-$spisok
-echo "------------------------------------"
-#$current = Read-Host -Prompt "Введите номер"
-#$port= new-Object System.IO.Ports.SerialPort $coms[$current-1].Name,9600,None,8,one
-$Credential = Get-Credential
-$Comp = Get-WmiObject Win32_ComputerSystem -ComputerName $OldName -Authentication 6
-$OS   = Get-WmiObject Win32_OperatingSystem -ComputerName $OldName
-$arp = arp -a
-$arp
+$SSHSession = New-SSHSession -ComputerName 192.168.1.15 -Credential $(Get-Credential) -Verbose
+$SSH = $SSHSession | New-SSHShellStream
+#$Credential = Get-Credential
+#$Comp = Get-WmiObject Win32_ComputerSystem -ComputerName $OldName -Authentication 6
+#$OS   = Get-WmiObject Win32_OperatingSystem -ComputerName $OldName
 #----------------------------------
 #Получение списка MAC-адресов по порядку портов
 #----------------------------------
 
-#$port.open()
-#for ($i = 0; $i -lt 15; $i++){
-#    $port.Read()
-#}
-#$port.Close()
+for ($i = 1; $i -lt 15; $i++){
+    $command = "sh fdb port ${i}"
+    $SSH.WriteLine($command)
+    $answer = $SSH.read()
+    $answer
+    $macs[$i] = $answer.Substring(229,17)
+}
+$macs
 
 #----------------------------------
 #Получение IP-адресов
@@ -68,7 +63,7 @@ $arp
 #Переименование компьютеров и смена IP-адреса
 #----------------------------------
 
-$Comp.Rename($NewName,$Credential.GetNetworkCredential().Password,$Credential.Username)
-$OS.Reboot()
+#$Comp.Rename($NewName,$Credential.GetNetworkCredential().Password,$Credential.Username)
+#$OS.Reboot()
 
 #----------------------------------
